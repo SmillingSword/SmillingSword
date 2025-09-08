@@ -1,1 +1,1 @@
-![Snake animation](https://github.com/SmillingSword/SmillingSword/blob/output/github-contribution-grid-snake.svg)
+![Metrics](https://raw.githubusercontent.com/SmillingSword/SmillingSword/main/metrics.svg)
