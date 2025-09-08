@@ -1,15 +1,17 @@
 name: GitHub Metrics
 
 on:
+  push:
+    branches: [ "main" ]
   schedule:
-    - cron: "0 */12 * * *"   # 2x sehari
+    - cron: "0 */12 * * *"
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -23,51 +25,37 @@ jobs:
           base: header, activity, community, repositories, metadata
           config_timezone: Asia/Jakarta
           filename: metrics.svg
-          output_action: none   # jangan commit otomatis, kita commit manual
+          output_action: none
 
-          plugins: |
-            isocalendar
-            languages
-            topics
-            habits
-            achievements
+          # plugin flags (pakai input plugin_xxx, bukan 'plugins:')
+          plugin_isocalendar: "yes"
+          plugin_languages: "yes"
+          plugin_topics: "yes"
+          plugin_habits: "yes"
 
-          plugin_isocalendar: yes
-          plugin_languages: yes
-          plugin_languages_ignored: html, css
+          # opsi plugin languages
+          plugin_languages_ignored: "html, css"
           plugin_languages_limit: 8
-          plugin_topics: yes
+
+          # opsi plugin topics
           plugin_topics_limit: 12
-          plugin_habits: yes
-          plugin_habits_charts: yes
-          plugin_achievements: yes
-          plugin_achievements_display: detailed
 
-      - name: Show generated file (debug)
-        if: always()
-        run: |
-          echo "ls -la"
-          ls -la
-          echo "file metrics.svg size:"
-          stat -c "%n %s" metrics.svg || true
+          # opsi plugin habits
+          plugin_habits_charts: "yes"
 
-      - name: Commit & push metrics.svg to main
-        if: always()
+      - name: Debug listing
+        run: ls -la
+
+      - name: Commit & push metrics.svg
         env:
           GIT_PAT: ${{ secrets.METRICS_TOKEN }}
         run: |
-          # configure git
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          # make sure file exists
           if [ ! -f metrics.svg ]; then
-            echo "metrics.svg NOT FOUND, exiting with error"
-            ls -la
+            echo "metrics.svg NOT FOUND"
             exit 1
           fi
-
-          # add/commit/push
           git add metrics.svg
-          git commit -m "chore(metrics): update metrics.svg" || echo "no changes to commit"
+          git commit -m "chore(metrics): update" || echo "no changes to commit"
           git push "https://x-access-token:${GIT_PAT}@github.com/${{ github.repository }}.git" HEAD:main
